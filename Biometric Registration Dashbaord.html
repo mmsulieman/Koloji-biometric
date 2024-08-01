@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Plan Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .plan-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .plan-header {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .card {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #myChart, #timelineChart {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+        .download-buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .download-buttons button {
+            margin: 0 10px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Registration Plan Map</h1>
+
+    <div class="download-buttons">
+        <button onclick="downloadExcel()">Download Excel</button>
+        <button onclick="downloadPDF()">Download PDF</button>
+        <button onclick="downloadPowerPoint()">Download PowerPoint</button>
+    </div>
+
+    <div class="plan-section">
+        <div class="plan-header">1. Daily Target Overview</div>
+        <div class="card" id="dailyTarget">Target: 500 registrations</div>
+        <div class="card" id="totalReach">Total Reach: 2,500 people</div>
+        <div class="card" id="averageRegistered">Average: 500 registrations</div>
+    </div>
+
+    <div class="plan-section">
+        <div class="plan-header">2. Challenges Encountered</div>
+        <div class="card">
+            <ul>
+                <li>Staff shortages</li>
+                <li>Technical issues with registration software</li>
+                <li>Low turnout in some areas</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="plan-section">
+        <div class="plan-header">3. Daily Registration Summary</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Target</th>
+                    <th>Registered</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="registrationSummary">
+                <!-- Rows will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <canvas id="myChart"></canvas>
+    <canvas id="timelineChart"></canvas>
+
+    <script>
+        const dailyData = [
+            { date: 'Aug 1', target: 500, registered: 450 },
+            { date: 'Aug 2', target: 500, registered: 480 },
+            { date: 'Aug 3', target: 500, registered: 520 },
+            { date: 'Aug 4', target: 500, registered: 530 },
+            { date: 'Aug 5', target: 500, registered: 600 }
+        ];
+
+        const targetElement = document.getElementById('dailyTarget');
+        const reachElement = document.getElementById('totalReach');
+        const averageElement = document.getElementById('averageRegistered');
+        const summaryElement = document.getElementById('registrationSummary');
+
+        function updateSummary() {
+            summaryElement.innerHTML = ''; // Clear existing rows
+            let totalRegistered = 0;
+
+            dailyData.forEach(data => {
+                const row = `<tr>
+                    <td>${data.date}</td>
+                    <td>${data.target}</td>
+                    <td>${data.registered}</td>
+                    <td>${data.registered >= data.target ? 'On Target' : 'Under Target'}</td>
+                </tr>`;
+                summaryElement.innerHTML += row;
+                totalRegistered += data.registered;
+            });
+
+            const averageRegistered = totalRegistered / dailyData.length;
+            const totalReach = totalRegistered * 5; // Assuming a reach factor of 5
+
+            targetElement.innerText = `Target: ${dailyData[0].target} registrations`;
+            reachElement.innerText = `Total Reach: ${totalReach} people`;
+            averageElement.innerText = `Average: ${Math.round(averageRegistered)} registrations`;
+        }
+
+        function updateCharts() {
+            myChart.data.labels = dailyData.map(data => data.date);
+            myChart.data.datasets[0].data = dailyData.map(data => data.registered);
+            myChart.data.datasets[1].data = dailyData.map(data => data.target);
+            myChart.update();
+
+            timelineChart.data.labels = dailyData.map(data => data.date);
+            timelineChart.data.datasets[0].data = dailyData.map(data => data.registered);
+            timelineChart.update();
+        }
+
+        // Initialize charts
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dailyData.map(data => data.date),
+                datasets: [{
+                    label: 'Registered',
+                    data: dailyData.map(data => data.registered),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Target',
+                    data: dailyData.map(data => data.target),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        const timelineChart = new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.map(data => data.date),
+                datasets: [{
+                    label: 'Registered Over Time',
+                    data: dailyData.map(data => data.registered),
+                    fill: false,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Initial population of the summary and charts
+        updateSummary();
+        updateCharts();
+
+        // Function to add new registration data dynamically
+        function addRegistrationData(date, target, registered) {
+            dailyData.push({ date, target, registered });
+            updateSummary();
+            updateCharts();
+        }
+
+        addRegistrationData('Aug 6', 500, 550);
+        addRegistrationData('Aug 7', 500, 480);
+        addRegistrationData('Aug 8', 500, 580);
+
+        // Download functions
+        function downloadExcel() {
+            const ws = XLSX.utils.json_to_sheet(dailyData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Registration Data");
+            XLSX.writeFile(wb, "registration_data.xlsx");
+        }
+
+        function downloadPDF() {
+            const element = document.body; // Change to specific element if needed
+            html2pdf().from(element).save("registration_data.pdf");
+        }
+
+        function downloadPowerPoint() {
+            // Placeholder for PowerPoint download functionality
+            alert('PowerPoint download functionality is not yet implemented.');
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</body>
+</html>
